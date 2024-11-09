@@ -50,8 +50,7 @@
             // See: https://owasp.org/www-community/attacks/xss/
             "X-XSS-Protection": "1; mode=block"
         },
-        // Set the allow_raw_access field to false to redirect all requests from .raw.icp0.io to .icp0.io
-        // The default behavior is to allow raw access.
-        // "allow_raw_access": true
+        // Uncomment to redirect all requests from .raw.icp0.io to .icp0.io
+        // "allow_raw_access": false
     },
 ]
