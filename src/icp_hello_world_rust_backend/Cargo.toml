@@ -11,6 +11,7 @@ crate-type = ["cdylib"]
 [dependencies]
 candid = "0.10.3"
 ic-cdk = "0.12.0"
+icp_gpt2 = { path = "../icp_gpt2" }  # Add direct dependency to GPT2 project
 
 [dev-dependencies]
 pocket-ic = "4.0.0"

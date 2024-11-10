@@ -21,6 +21,7 @@ import {
   Volume2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { icp_hello_world_rust_backend } from "../../declarations/icp_hello_world_rust_backend";
 
 const ChatAiIcons = [
   {
@@ -76,16 +77,53 @@ export default function Page() {
     e.preventDefault();
     if (!input) return;
 
-    setMessages((messages) => [
-      ...messages,
-      {
-        id: messages.length + 1,
-        avatar: selectedUser.avatar,
-        name: selectedUser.name,
-        role: "user",
-        message: input,
-      },
-    ]);
+    setisLoading(true);
+
+    try {
+      // Add user message
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          id: prevMessages.length + 1,
+          avatar: selectedUser.avatar,
+          name: selectedUser.name,
+          role: "user",
+          message: input,
+        },
+      ]);
+
+      // First, tokenize the input using our Rust tokenizer
+      const tokenizedInput = await icp_hello_world_rust_backend.tokenizer.prepare_for_model(input);
+      
+      // Send tokenized input to GPT2 model
+      const modelResponse = await icp_hello_world_rust_backend.model_inference(14, tokenizedInput);
+      
+      if (modelResponse.Ok) {
+        // Decode the response tokens back to text
+        const decodedResponse = await icp_hello_world_rust_backend.tokenizer.decode(modelResponse.Ok);
+        
+        // Add AI response
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            id: prevMessages.length + 1,
+            avatar: "",
+            name: "ChatBot",
+            role: "ai",
+            message: decodedResponse,
+          },
+        ]);
+      } else {
+        console.error("GPT2 error:", modelResponse.Err);
+      }
+    } catch (error) {
+      console.error("Error in message flow:", error);
+    } finally {
+      setisLoading(false);
+      setInput("");
+      formRef.current?.reset();
+    }
+  };
 
     setInput("");
     formRef.current?.reset();

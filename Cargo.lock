@@ -911,6 +911,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "ic-cdk 0.12.2",
+ "icp_gpt2",
  "pocket-ic",
 ]
 
