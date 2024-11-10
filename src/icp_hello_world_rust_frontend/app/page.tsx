@@ -74,7 +74,7 @@ export default function Page() {
     }
   };
 
-  const handleSendMessage = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input) return;
 
@@ -93,26 +93,18 @@ export default function Page() {
         },
       ]);
 
-      const otherStuff = icp_hello_world_rust_backend.encode();
+      const tokenizeResult = await icp_hello_world_rust_backend.encode(input);
 
-      const stuff = icp_gpt2.model_inference();
-
-      const moreOtherStuff = icp_hello_world_rust_backend.decode();
-
-      // First, tokenize the input using our Rust tokenizer
-      const tokenizedInput =
-        await icp_hello_world_rust_backend.tokenizer.prepare_for_model(input);
-
-      // Send tokenized input to GPT2 model
-      const modelResponse = await icp_hello_world_rust_backend.model_inference(
-        14,
-        tokenizedInput
+      const modelResponse = await icp_gpt2.model_inference(
+        20,
+        tokenizeResult.tokens
       );
 
-      if (modelResponse.Ok) {
+      if ("Ok" in modelResponse) {
         // Decode the response tokens back to text
-        const decodedResponse =
-          await icp_hello_world_rust_backend.tokenizer.decode(modelResponse.Ok);
+        const decodedResponse = await icp_hello_world_rust_backend.decode(
+          modelResponse.Ok
+        );
 
         // Add AI response
         setMessages((prevMessages) => [
@@ -127,9 +119,33 @@ export default function Page() {
         ]);
       } else {
         console.error("GPT2 error:", modelResponse.Err);
+
+        // Optionally add error message to chat
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            id: prevMessages.length + 1,
+            avatar: "",
+            name: "ChatBot",
+            role: "ai",
+            message: "Sorry, I encountered an error processing your message.",
+          },
+        ]);
       }
-      //
     } catch (error) {
+      console.error("Chat error:", error);
+
+      // Add error message to chat
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          id: prevMessages.length + 1,
+          avatar: "",
+          name: "ChatBot",
+          role: "ai",
+          message: "Sorry, something went wrong. Please try again.",
+        },
+      ]);
     } finally {
       setisLoading(false);
       setInput("");
