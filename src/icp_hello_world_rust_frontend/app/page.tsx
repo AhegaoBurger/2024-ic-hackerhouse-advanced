@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { icp_hello_world_rust_backend } from "../../declarations/icp_hello_world_rust_backend";
+import { icp_gpt2 } from "../../declarations/icp_gpt2";
 
 const ChatAiIcons = [
   {
@@ -92,16 +93,27 @@ export default function Page() {
         },
       ]);
 
+      const otherStuff = icp_hello_world_rust_backend.encode();
+
+      const stuff = icp_gpt2.model_inference();
+
+      const moreOtherStuff = icp_hello_world_rust_backend.decode();
+
       // First, tokenize the input using our Rust tokenizer
-      const tokenizedInput = await icp_hello_world_rust_backend.tokenizer.prepare_for_model(input);
-      
+      const tokenizedInput =
+        await icp_hello_world_rust_backend.tokenizer.prepare_for_model(input);
+
       // Send tokenized input to GPT2 model
-      const modelResponse = await icp_hello_world_rust_backend.model_inference(14, tokenizedInput);
-      
+      const modelResponse = await icp_hello_world_rust_backend.model_inference(
+        14,
+        tokenizedInput
+      );
+
       if (modelResponse.Ok) {
         // Decode the response tokens back to text
-        const decodedResponse = await icp_hello_world_rust_backend.tokenizer.decode(modelResponse.Ok);
-        
+        const decodedResponse =
+          await icp_hello_world_rust_backend.tokenizer.decode(modelResponse.Ok);
+
         // Add AI response
         setMessages((prevMessages) => [
           ...prevMessages,
@@ -116,14 +128,13 @@ export default function Page() {
       } else {
         console.error("GPT2 error:", modelResponse.Err);
       }
+      //
     } catch (error) {
-      console.error("Error in message flow:", error);
     } finally {
       setisLoading(false);
       setInput("");
       formRef.current?.reset();
     }
-  };
 
     setInput("");
     formRef.current?.reset();

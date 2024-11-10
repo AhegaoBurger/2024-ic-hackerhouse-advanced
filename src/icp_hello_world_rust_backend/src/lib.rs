@@ -1,5 +1,5 @@
 use candid::{CandidType, Deserialize};
-use ic_cdk::export::candid::candid_method;
+use ic_cdk::query;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::cell::RefCell;
@@ -25,25 +25,44 @@ thread_local! {
 }
 
 // Make init public so lib.rs can call it
-pub fn init() {
-    let vocab = init_vocab();
-    let merges = init_merges();
-    
+// thread_local! {
+//     static VOCAB: RefCell<HashMap<String, i64>> = RefCell::new(HashMap::new());
+// }
+
+// Include the vocab.json file at compile time
+const VOCAB_JSON: &str = include_str!("vocab.json");
+
+#[ic_cdk::post_upgrade]
+fn post_upgrade() {
+    // Parse the vocabulary from the included JSON file
+    let vocab: HashMap<String, i64> = match serde_json::from_str(VOCAB_JSON) {
+        Ok(v) => v,
+        Err(e) => {
+            ic_cdk::println!("Error loading vocabulary: {}", e);
+            HashMap::new() // Initialize with empty vocab if there's an error
+        }
+    };
+
     VOCAB.with(|v| *v.borrow_mut() = vocab);
-    MERGES.with(|m| *m.borrow_mut() = merges);
+    
+    // Print some stats about the loaded vocabulary
+    VOCAB.with(|v| {
+        let vocab_size = v.borrow().len();
+        ic_cdk::println!("Loaded vocabulary with {} tokens", vocab_size);
+    });
 }
 
-fn init_vocab() -> HashMap<String, i64> {
-    let mut vocab = HashMap::new();
-    vocab.insert("<|endoftext|>".to_string(), 50256);
-    vocab
-}
+// fn init_vocab() -> HashMap<String, i64> {
+//     let mut vocab = HashMap::new();
+//     vocab.insert("<|endoftext|>".to_string(), 50256);
+//     vocab
+// }
 
-fn init_merges() -> HashMap<(String, String), i64> {
-    let mut merges = HashMap::new();
-    merges.insert(("he".to_string(), "llo".to_string()), 1);
-    merges
-}
+// fn init_merges() -> HashMap<(String, String), i64> {
+//     let mut merges = HashMap::new();
+//     merges.insert(("he".to_string(), "llo".to_string()), 1);
+//     merges
+// }
 
 // #[ic_cdk::update]
 // #[candid_method(update)]
@@ -64,7 +83,6 @@ fn init_merges() -> HashMap<(String, String), i64> {
 // }
 
 #[ic_cdk::query]
-#[candid_method(query)]
 pub fn encode(text: String) -> TokenizerResult {
     let mut tokens = Vec::new();
     let words: Vec<&str> = text.split_whitespace().collect();
@@ -84,7 +102,7 @@ pub fn encode(text: String) -> TokenizerResult {
 }
 
 #[ic_cdk::query]
-#[candid_method(query)]
+// #[candid_method(query)]
 pub fn decode(tokens: Vec<i64>) -> String {
     let mut result = Vec::new();
     
@@ -105,7 +123,7 @@ pub fn decode(tokens: Vec<i64>) -> String {
 
 // Function to initialize tokenizer with vocabulary and merges
 #[ic_cdk::update]
-#[candid_method(update)]
+// #[candid_method(update)]
 fn initialize_tokenizer(vocab_bytes: Vec<u8>, merges_bytes: Vec<u8>) -> Result<(), String> {
     // Parse vocabulary JSON
     let vocab: HashMap<String, i64> = serde_json::from_slice(&vocab_bytes)
@@ -142,4 +160,8 @@ fn parse_merges(bytes: &[u8]) -> Result<HashMap<(String, String), i64>, String> 
     Ok(merges)
 }
 
-candid::export_service!();
+// Original greet function
+#[ic_cdk::query]
+pub fn greet(name: String) -> String {
+    format!("Hello, {}!", name)
+}

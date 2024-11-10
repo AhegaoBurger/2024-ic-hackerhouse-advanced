@@ -1,3 +1,16 @@
+type TokenizerResult = record {
+    tokens: vec int64;
+    text: text;
+};
+
+type GenerationResult = record {
+    text: text;
+    tokens: vec int64;
+};
+
 service : {
-    "greet": (text) -> (text) query;
+    "encode": (text) -> (TokenizerResult) query;
+    "decode": (vec int64) -> (text) query;
+    "generate_text": (text, nat8) -> (variant { Ok: GenerationResult; Err: text });
+    "initialize_tokenizer": (vec nat8, vec nat8) -> (variant { Ok: null; Err: text });
 }
