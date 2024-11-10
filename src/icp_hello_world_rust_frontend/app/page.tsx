@@ -21,8 +21,56 @@ import {
   Volume2,
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { icp_hello_world_rust_backend } from "../../declarations/icp_hello_world_rust_backend";
-import { icp_gpt2 } from "../../declarations/icp_gpt2";
+import {
+  idlFactory,
+  type _SERVICE,
+} from "@/declarations/icp_hello_world_rust_backend/icp_hello_world_rust_backend.did";
+import {
+  idlFactory as gpt2IdlFactory,
+  type _SERVICE as _gpt2SERVICE,
+} from "@/declarations/icp_gpt2/icp_gpt2.did";
+
+import { Actor, ActorSubclass, HttpAgent } from "@dfinity/agent";
+import { InterfaceFactory } from "@dfinity/candid/lib/cjs/idl";
+
+/* CANISTER_ID is replaced by webpack based on node environment
+ * Note: canister environment variable will be standardized as
+ * process.env.CANISTER_ID_<CANISTER_NAME_UPPERCASE>
+ * beginning in dfx 0.15.0
+ */
+const canisterId = process.env.CANISTER_ID_ICP_HELLO_WORLD_RUST_BACKEND;
+const gpt2CanisterId = process.env.CANISTER_ID_ICP_GPT2;
+
+const createActor = (idlF: InterfaceFactory, cId: string) => {
+  const agent = new HttpAgent({ host: "http://127.0.0.1:4943" });
+
+  // Fetch root key for certificate validation during development
+  if (process.env.DFX_NETWORK !== "ic") {
+    agent.fetchRootKey().catch((err) => {
+      console.warn(
+        "Unable to fetch root key. Check to ensure that your local replica is running"
+      );
+      console.error(err);
+    });
+  }
+
+  // Creates an actor with using the candid interface and the HttpAgent
+  return Actor.createActor(idlF, {
+    agent,
+    canisterId: cId,
+  });
+};
+
+// @ts-ignore
+const icp_hello_world_rust_backend: ActorSubclass<_SERVICE> = createActor(
+  idlFactory,
+  canisterId
+);
+// @ts-ignore
+const icp_gpt2: ActorSubclass<_gpt2SERVICE> = createActor(
+  gpt2IdlFactory,
+  gpt2CanisterId
+);
 
 const ChatAiIcons = [
   {
@@ -81,6 +129,7 @@ export default function Page() {
     setisLoading(true);
 
     try {
+      console.log("Message received");
       // Add user message
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -92,19 +141,26 @@ export default function Page() {
           message: input,
         },
       ]);
+      console.log("input: ", input, icp_hello_world_rust_backend);
 
       const tokenizeResult = await icp_hello_world_rust_backend.encode(input);
 
+      console.log("tokenizeResult: ", tokenizeResult);
+
       const modelResponse = await icp_gpt2.model_inference(
-        20,
+        5,
         tokenizeResult.tokens
       );
+
+      console.log("modelResponse: ", modelResponse);
 
       if ("Ok" in modelResponse) {
         // Decode the response tokens back to text
         const decodedResponse = await icp_hello_world_rust_backend.decode(
           modelResponse.Ok
         );
+
+        console.log("decodeResponse: ", decodedResponse);
 
         // Add AI response
         setMessages((prevMessages) => [
@@ -118,7 +174,7 @@ export default function Page() {
           },
         ]);
       } else {
-        console.error("GPT2 error:", modelResponse.Err);
+        // console.error("GPT2 error:", modelResponse.Err);
 
         // Optionally add error message to chat
         setMessages((prevMessages) => [

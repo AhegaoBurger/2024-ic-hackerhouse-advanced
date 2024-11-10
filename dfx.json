@@ -3,14 +3,18 @@
     "icp_hello_world_rust_backend": {
       "candid": "src/icp_hello_world_rust_backend/icp_hello_world_rust_backend.did",
       "package": "icp_hello_world_rust_backend",
-      "type": "rust"
+      "type": "rust",
+      "declarations": {
+        "bindings": ["ts", "js"],
+        "output": "src/icp_hello_world_rust_frontend/declarations/icp_hello_world_rust_backend/"
+      }
     },
     "icp_hello_world_rust_frontend": {
       "dependencies": ["icp_hello_world_rust_backend"],
       "frontend": {
         "entrypoint": "src/icp_hello_world_rust_frontend/src/index.html"
       },
-      "source": ["dist/icp_hello_world_rust_frontend/"],
+      "source": ["src/icp_hello_world_rust_frontend/out"],
       "type": "assets"
     },
     "icp_gpt2": {
@@ -20,7 +24,11 @@
       "wasm": "./target/wasm32-wasi/release/icp_gpt2-ic.wasm",
       "build": ["bash src/icp_gpt2/build.sh"],
       "shrink": true,
-      "gzip": true
+      "gzip": true,
+      "declarations": {
+        "bindings": ["ts", "js"],
+        "output": "src/icp_hello_world_rust_frontend/declarations/icp_gpt2/"
+      }
     }
   },
   "defaults": {

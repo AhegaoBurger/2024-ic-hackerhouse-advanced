@@ -1,5 +1,5 @@
 use candid::{CandidType, Deserialize};
-use ic_cdk::query;
+// use ic_cdk::query;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::cell::RefCell;
@@ -32,8 +32,8 @@ thread_local! {
 // Include the vocab.json file at compile time
 const VOCAB_JSON: &str = include_str!("vocab.json");
 
-#[ic_cdk::post_upgrade]
-fn post_upgrade() {
+#[ic_cdk::init]
+fn init() {
     // Parse the vocabulary from the included JSON file
     let vocab: HashMap<String, i64> = match serde_json::from_str(VOCAB_JSON) {
         Ok(v) => v,
@@ -50,6 +50,11 @@ fn post_upgrade() {
         let vocab_size = v.borrow().len();
         ic_cdk::println!("Loaded vocabulary with {} tokens", vocab_size);
     });
+}
+
+#[ic_cdk::post_upgrade]
+fn post_upgrade() {
+    init()
 }
 
 // fn init_vocab() -> HashMap<String, i64> {
